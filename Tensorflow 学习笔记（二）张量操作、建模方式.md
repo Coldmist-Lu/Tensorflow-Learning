@@ -1,4 +1,8 @@
-# Tensorflow 学习笔记（二）张量操作
+# Tensorflow 学习笔记（二）张量操作、建模方式
+
+* 本笔记将详细介绍张量的概念、基本创建和操作、常用层以及三种建模方式。
+
+
 
 ## 张量
 
@@ -287,13 +291,180 @@ tf.keras.layers.Dense(64, bias_initializer=tf.keras.initializers.Constant(2.0))
 ## 建模方式
 
 * 本节将介绍三种建模方式：
-  * Sequential model（顺序模型）
-  * Functional model（函数模型）
-  * Subclassing model（子类化模型）
+  * **Sequential model**（顺序模型）：使用 Sequential 方法构建。
+  * **Functional model**（函数模型）：如果模型有多输入或者多输出，或者模型需要共享权重、具有残差连接等非顺序结构，推荐使用函数式 API 进行创建。
+  * **Subclassing model**（子类化模型）：需要自定义层之间的传输，模型复杂时使用。
+* 用于模型训练的重要参数 tf.keras.Model.fit()：
+  * **epochs**：训练分为几个时期，每一个epoch是对整个输入数据的一次迭代（此操作以较小的批次完成）。
+  * **batch_size**：当传递 Numpy 数据时，模型将数据切成较小的批次，并在训练期间对这些批次进行迭代。该整数指定每个批次的大小。请注意，如果不能将样本总数除以批次大小，则最后一批可能会更小。
+  * **validation data**：在模型训练时，监控在某些验证数据上监视其性能。传递此参数（输入和标签的元组）可以使模型在每个时期结束时以推断模式显示所传递数据的损失和度量。
 
-### 顺序模型
-
-* 顺序模型类似搭积木的方式构建。
 
 
+### 顺序模型 Sequential Model
 
+* 顺序模型类似搭积木的方式构建。需要用到 tf.keras.Sequential 方法，是 keras 自带的一种方法。
+
+
+
+### Experiment 5：顺序模型构建
+
+* 顺序模型一般有两种构建方式，第一种是使用 model.add 方法设置层：
+
+```python
+from tensorflow.keras import layers
+import tensorflow as tf
+
+model = tf.keras.Sequential()
+model.add(layers.Dense(64, activation='relu')) # 第一层
+model.add(layers.Dense(64, activation='relu')) # 第二层
+model.add(layers.Dense(10)) # 第三层
+```
+
+* 第二种是直接写成一个 list 传给 Sequential 方法：
+
+```python
+model = tf.keras.Sequential([
+    layers.Dense(64, activation='relu', input_shape=(32, )), # 第一层
+    layers.Dense(64, activation='relu'), # 第二层
+    layers.Dense(10) # 第三层
+])
+```
+
+* 训练模型：
+
+```python
+model.compile(optimizer=tf.keras.optimizers.Adam(0.01),
+              loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
+              metrics=['accuracy'])
+
+import numpy as np
+data = np.random.random((1000, 32))
+labels = np.random.random((1000, 10))
+
+model.fit(data, labels, epochs=10, batch_size=32)
+"""
+Train on 1000 samples
+Epoch 1/10
+  32/1000 [..............................] - ETA: 3:11 - loss: 12.1850 - accuracy: 0.1562
+...
+"""
+```
+
+
+
+### 函数式模型 Functional Model
+
+* 函数式模型是一种创建模型的方法，该模型比 tf.keras.Sequential 更灵活。
+* 函数式模型可以处理具有非线性拓扑的模型，具有共享层的模型以及具有**多个输入或输出**的模型等等。
+* 深度学习模型通常是层的**有向无环图**（DAG）的主要思想。因此，函数式模型是一种**构建层图**的方法。
+
+
+
+### Experiment 6：函数式模型构建
+
+#### 基本构建
+
+* 输入：(input: 32-dimensional vectors)
+* 第一层：[Dense (64 units, relu activation)]
+* 第二层：[Dense (64 units, relu activation)]
+* 第三层：[Dense (10 units, softmax activation)]
+* 输出：(output: logits of a probability distribution over 10 classes)
+
+```python
+inputs = tf.keras.Input(shape=(32, ))
+x = layers.Dense(64, activation='relu')(inputs) # 第一层
+x = layers.Dense(64, activation='relu')(x) # 第二层
+predictions = layers.Dense(10)(x) # 第三层
+```
+
+```python
+model = tf.keras.Model(inputs=inputs, outputs=predictions)
+
+model.compile(optimizer=tf.keras.optimizers.RMSprop(0.001),
+              loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
+              metrics=['accuracy'])
+
+import numpy as np
+
+data = np.random.random((1000, 32))
+labels = np.random.random((1000, 10))
+model.fit(data, labels, batch_size=32, epochs=5)
+```
+
+#### 多输入模型构建
+
+```python
+inputs1 = tf.keras.Input(shape=(32, ))  # 输入1
+inputs2 = tf.keras.Input(shape=(32, ))  # 输入2
+x1 = layers.Dense(64, activation='relu')(inputs1) # 第一层
+x2 = layers.Dense(64, activation='relu')(inputs2) # 第一层
+x = tf.concat([x1,x2], axis=-1) # 合并
+x = layers.Dense(64, activation='relu')(x) # 第二层
+predictions = layers.Dense(10)(x) # 第三层
+```
+
+```python
+model = tf.keras.Model(inputs=[inputs1,inputs2], outputs=predictions)
+
+
+model.compile(optimizer=tf.keras.optimizers.RMSprop(0.001),
+              loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
+              metrics=['accuracy'])
+
+import numpy as np
+data1 = np.random.random((1000, 32))
+data2 = np.random.random((1000, 32))
+labels = np.random.random((1000, 10))
+model.fit((data1,data2), labels, batch_size=32, epochs=5)
+```
+
+
+
+### 子类模型 Subclassing Model
+
+* 通过子类化 tf.keras.Model 和定义自己的**前向传播**模型来构建完全可定制的模型。
+* 和 eager execution 模式相辅相成。
+
+
+
+### Experiment 7：子类模型构建
+
+```python
+class MyModel(tf.keras.Model):
+    
+    def __init__(self, num_classes=10):
+        super(MyModel, self).__init__(name='my_model')
+        self.num_classes = num_classes
+        # 在这里定义自己需要的层
+        self.dense_1 = layers.Dense(32, activation='relu')
+        self.dense_2 = layers.Dense(num_classes)
+        
+    def call(self, inputs):
+        # 定义前向传播
+        # 使用 __init__ 定义的层
+        x = self.dense_1(inputs)
+        x = self.dense_2(x)
+        return x
+```
+
+```python
+model = MyModel(num_classes=10)
+
+model.compile(optimizer=tf.keras.optimizers.RMSprop(0.001),
+              loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
+              metrics=['accuracy'])
+
+data = np.random.random((1000, 32))
+labels = np.random.random((1000, 10))
+# Trains for 5 epochs.
+model.fit(data, labels, batch_size=32, epochs=5)
+```
+
+* 总的来说，定义一个导出类，继承自 tf.keras.Model，其中修改两个函数，详见代码。
+
+
+
+* Written by：Sirius. Lu
+* Reference：深度之眼《Tensorflow 框架训练营》
+* 2020.8.20

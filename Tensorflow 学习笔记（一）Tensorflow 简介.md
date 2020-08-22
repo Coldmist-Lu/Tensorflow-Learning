@@ -1,5 +1,7 @@
 # Tensorflow 学习笔记（一）Tensorflow 简介
 
+* 本笔记简要介绍了 Tensorflow 2.0 的历史、特性以及基本安装步骤。
+
 
 
 ## Tensorflow 2.0 简介
@@ -252,3 +254,91 @@ model.fit(X, y)
 
 
 
+## Tensorflow 2.0 安装
+
+* tf2.0 的安装不太复杂，和其他 tf 版本差不多，因此这里只介绍 win10 下基本安装步骤和代码实现：
+
+
+
+### Tensorflow cpu 安装
+
+* 首先换用清华源：
+
+```shell
+# 临时换用
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple some-package
+# 永久更改
+pip install pip -U
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+* 直接使用 cpu 跑程序可以直接在命令行输入下面的代码：
+
+```python
+pip install tensorflow==2.0.0
+```
+
+
+
+### Tensorflow-gpu 安装
+
+#### 安装驱动
+
+* nvidia 驱动的安装有很多种，可以直接在 nvidia 内安装，上官网自动更新，或手动更新，或使用驱动精灵等软件更新即可。
+* 更新后，用 nvidia-smi 看一下版本。如果没有该命令，检查一下系统变量 Path 中有没有添加：
+
+```
+C:\Program Files\NVIDIA Corporation\NVSMI
+```
+
+#### 安装 CUDA
+
+* 下载 CUDA，笔者使用的版本是：cuda_10.0.130_411.31_win10；
+* CUDA 下载后需要需要安装，安装时只勾选 CUDA 相应包，并去掉 CUDAVisualStudioIntegration。
+* 安装后，向用户变量 path 中写入：
+
+```
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0\bin
+C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0\extras\CUPTI\libx64
+```
+
+#### 安装 cudnn
+
+* cudnn 是一个神经网络加速包，笔者使用的版本是：cudnn-10.0-windows10-x64-v7.6.0.64；
+* 注意：在官网上下载的时候需要注册一个 nvidia 账号。
+* 将 cudnn 上的文件复制到 CUDA 安装目录下，替换原文件即可。
+
+#### 安装 tensorflow-gpu
+
+* 可以提前检验一下 CUDA 是否安装成功：
+
+```shell
+nvcc -V
+```
+
+* 以上语句查看版本号。
+* 如果无误，下面直接安装 gpu 环境：
+
+```shell
+pip install tensorflow-gpu==2.0.0
+```
+
+* 等待安装完成。
+
+#### 测试
+
+* 用下面的 python 代码可以测试 tensorflow-gpu 是否可用：
+
+```python
+import tensorflow as tf
+print(tf.__version__) # 2.0.0  检查tensorflow版本号
+print(tf.test.is_gpu_available()) # True  检查gpu是否可用（第一次检查可能会很慢，需耐心等待！）
+```
+
+* 以上就是 Tensorflow 安装的全部工作了。
+
+
+
+* Written by：Sirius. Lu
+* Reference：深度之眼《Tensorflow 框架训练营》
+* 2020.8.20
