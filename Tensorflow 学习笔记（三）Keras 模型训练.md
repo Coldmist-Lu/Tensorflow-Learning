@@ -1,6 +1,7 @@
 # Tensorflow 学习笔记（三）Keras 模型训练
 
 * 本笔记将介绍如何在 Keras 模型下构建和训练网络模型。
+* 本笔记实验代码的输出结果详见 Tensorflow2.0-in-action 仓库：2 Model Training on Keras 记事本文件。
 
 
 
@@ -454,7 +455,7 @@ model = tf.keras.Model(inputs=[image_input, timeseries_input],
 * 用下面的函数，安装指定包即可画出模型的示意图：
 
 ```python
-tf.keras.utils.plot_model(model, 'multi_input_and_output_model.png', show_shapes=True,dpi=500)
+tf.keras.utils.plot_model(model, 'multi_input_and_output_model.png', show_shapes=True, dpi=500)
 ```
 
 * 示意图详见代码文件。

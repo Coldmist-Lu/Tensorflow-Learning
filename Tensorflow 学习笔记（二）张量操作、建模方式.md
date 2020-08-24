@@ -1,6 +1,7 @@
 # Tensorflow 学习笔记（二）张量操作、建模方式
 
 * 本笔记将详细介绍张量的概念、基本创建和操作、常用层以及三种建模方式。
+* 本笔记实验代码的输出结果详见 Tensorflow2.0-in-action 仓库：1 Tensor and User-defined Model 记事本文件。
 
 
 
@@ -406,7 +407,6 @@ predictions = layers.Dense(10)(x) # 第三层
 
 ```python
 model = tf.keras.Model(inputs=[inputs1,inputs2], outputs=predictions)
-
 
 model.compile(optimizer=tf.keras.optimizers.RMSprop(0.001),
               loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
