@@ -1,7 +1,7 @@
 # Tensorflow 学习笔记（四）自定义模型训练
 
 * 本笔记将介绍如何通过 eager 模式的自动求导机制来构建自定义模型，并完成训练任务。
-* 本笔记实验代码的输出结果详见 Tensorflow2.0-in-action 仓库：2 Model Training on Keras 记事本文件。
+* 本笔记实验代码的输出结果详见 Tensorflow2.0-in-action 仓库：3 Training on Self-defined Model 记事本文件。
 
 
 

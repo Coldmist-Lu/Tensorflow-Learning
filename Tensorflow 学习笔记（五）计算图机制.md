@@ -1,7 +1,7 @@
 # Tensorflow 学习笔记（五）计算图机制
 
-* 本笔记将介绍如何通过 eager 模式的自动求导机制来构建自定义模型，并完成训练任务。
-* 本笔记实验代码的输出结果详见 Tensorflow2.0-in-action 仓库：2 Model Training on Keras 记事本文件。
+* 本笔记将介绍 Tensorflow 中的计算图，并且着重介绍 TF2.0 使用的 AutoGraph 机制。
+* 本笔记实验代码的输出结果详见 Tensorflow2.0-in-action 仓库：4 AutoGraph 记事本文件。
 
 
 
