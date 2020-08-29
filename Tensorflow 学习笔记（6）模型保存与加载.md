@@ -288,5 +288,5 @@ model.predict(x_test)
 
 * Written by：Sirius. Lu
 * Reference：深度之眼《Tensorflow 框架训练营》
-* 2020.8.26
+* 2020.8.27
 
