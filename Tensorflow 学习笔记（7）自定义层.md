@@ -1,7 +1,7 @@
 # Tensorflow 学习笔记（七）自定义层
 
 * 本笔记将介绍网络层的自定义方法，详细介绍其构造方法、注意事项，最后给出一个完整的训练案例
-* 本笔记实验代码的输出结果详见 Tensorflow2.0-in-action 仓库：5 Model Saving and Loading 记事本文件。
+* 本笔记实验代码的输出结果详见 Tensorflow2.0-in-action 仓库：6 Self-defined Model 记事本文件。
 
 
 
