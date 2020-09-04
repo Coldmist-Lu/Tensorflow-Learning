@@ -47,7 +47,170 @@
 
 ### Experiment 1：数据集的创建方法
 
+#### from tensors 和 from_tensor_slices 的区别
 
+* 基于列表构造：
+
+```python
+ds = tf.data.Dataset.from_tensor_slices([1,2,3,4])
+for line in ds:
+    print(line)
+"""
+tf.Tensor(1, shape=(), dtype=int32)
+tf.Tensor(2, shape=(), dtype=int32)
+tf.Tensor(3, shape=(), dtype=int32)
+tf.Tensor(4, shape=(), dtype=int32)
+"""
+```
+
+```python
+ds = tf.data.Dataset.from_tensors([1,2,3,4])
+for line in ds:
+    print(line)
+"""
+tf.Tensor([1 2 3 4], shape=(4,), dtype=int32)
+"""
+```
+
+* 基于 constant + 字典 构造：
+
+```python
+t = tf.constant([[1, 2], [3, 4]])
+ds = tf.data.Dataset.from_tensors(t)   # [[1, 2], [3, 4]]
+for line in ds:
+    print(line)    
+"""
+tf.Tensor(
+[[1 2]
+ [3 4]], shape=(2, 2), dtype=int32)
+"""
+```
+
+```python
+t = tf.constant([[1, 2], [3, 4]])
+ds = tf.data.Dataset.from_tensors({"a":t,"b":t})   # [[1, 2], [3, 4]]
+for line in ds:
+    print(line)
+    break
+"""
+{'a': <tf.Tensor: id=43, shape=(2, 2), dtype=int32, numpy=
+array([[1, 2],
+       [3, 4]])>, 'b': <tf.Tensor: id=44, shape=(2, 2), dtype=int32, numpy=
+array([[1, 2],
+       [3, 4]])>}
+"""
+```
+
+* 基于 numpy 构造：
+
+```python
+dataset1 = tf.data.Dataset.from_tensors(np.zeros(shape=(10,5,2), dtype=np.float32))
+for line in dataset1:
+    print(line.shape) # (10, 5, 2)
+    break
+```
+
+```python
+dataset2 = tf.data.Dataset.from_tensor_slices(np.zeros(shape=(10,5,2), dtype=np.float32))
+for line in dataset2:
+    print(line.shape) # (5, 2)
+    break
+```
+
+* 基于 numpy + 字典 构造：
+
+```python
+dataset3=tf.data.Dataset.from_tensors({"a":np.zeros(shape=(10,5,2), dtype=np.float32),
+                                       "b":np.zeros(shape=(10,5,2), dtype=np.float32)})
+for line in dataset3:
+    print(line['a'].shape,line['b'].shape) # (10, 5, 2) (10, 5, 2)
+    break
+```
+
+```python
+dataset3=tf.data.Dataset.from_tensor_slices({"a":np.zeros(shape=(10,5,2), dtype=np.float32),
+                                       "b":np.zeros(shape=(10,5,2), dtype=np.float32)})
+for line in dataset3:
+    print(line['a'].shape,line['b'].shape) # (5, 2) (5, 2)
+    break
+```
+
+#### numpy 完整数据读取
+
+```python
+mnist = np.load("../../Dataset/mnist.npz")
+x_train, y_train = mnist['x_train'], mnist['y_train']
+
+x_train.shape, y_train.shape
+```
+
+```python
+x_train = np.expand_dims(x_train, axis=-1) # 增加颜色通道维
+x_train.shape
+```
+
+```python
+mnist_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train)) # 构建数据集
+```
+
+```python
+for image, label in mnist_dataset:
+    plt.title(label.numpy())
+    plt.imshow(image.numpy()[:, :,0])
+    plt.show()
+    break
+```
+
+#### pandas 数据读取
+
+```python
+df = pd.read_csv("../../Dataset/heart.csv")
+df.head()
+```
+
+* 转换数据类型：
+
+```python
+df.dtypes
+df['thal'] = pd.Categorical(df['thal'])
+df['thal'] = df.thal.cat.codes
+```
+
+* 建立数据集：
+
+```python
+target = df.pop('target')
+dataset = tf.data.Dataset.from_tensor_slices((df.values, target.values))
+for feat, targ in dataset.take(5):
+    print ('Features: {}, Target: {}'.format(feat, targ))
+```
+
+#### 从 Python generator 构建数据管道
+
+```python
+img_gen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255, rotation_range=20)
+flowers = '../../Dataset/flower_photos'
+```
+
+```python
+def Gen():
+    gen = img_gen.flow_from_directory(flowers)
+    for (x, y) in gen:
+        yield (x, y)
+```
+
+```python
+ds = tf.data.Dataset.from_generator(
+    Gen,
+    output_types=(tf.float32, tf.float32)
+)
+```
+
+```python
+for image, label in ds:
+    print(image.shape, label.shape)
+    break
+```
 
 
 
@@ -77,6 +240,30 @@ tf.data.TFRecordDataset(
 
 ### Experiment 2：TFRecordDataset 用法实例
 
+```python
+feature_description = { # 定义Feature结构，告诉解码器每个Feature的类型是什么
+    'image': tf.io.FixedLenFeature([], tf.string),
+    'label': tf.io.FixedLenFeature([], tf.int64),
+}
+```
+
+```python
+def _parse_example(example_string): # 将 TFRecord 文件中的每一个序列化的 tf.train.Example 解码
+    feature_dict = tf.io.parse_single_example(example_string, feature_description)
+    feature_dict['image'] = tf.io.decode_jpeg(feature_dict['image'])    # 解码JPEG图片
+    feature_dict['image'] = tf.image.resize(feature_dict['image'], [256, 256]) / 255.0
+    return feature_dict['image'], feature_dict['label']
+```
+
+```python
+batch_size = 32
+train_dataset = tf.data.TFRecordDataset("../../Dataset/sub_train.tfrecords")
+train_dataset = train_dataset.map(_parse_example)
+for image, label in train_dataset:
+    print(image.shape, label)
+    break
+```
+
 
 
 
@@ -102,6 +289,26 @@ tf.data.TextLineDataset(
 
 
 ### Experiment 3：TextLineDataset 用法实例
+
+```python
+titanic_lines = tf.data.TextLineDataset(["../../Dataset/titanic_dataset/train.csv", "../../Dataset/titanic_dataset/eval.csv"])
+```
+
+```python
+def data_func(line):
+    line = tf.strings.split(line, sep=',')
+    return line
+```
+
+```python
+titanic_data = titanic_lines.skip(1).map(data_func)
+```
+
+```python
+for line in titanic_data:
+    print(line)
+    break
+```
 
 
 
